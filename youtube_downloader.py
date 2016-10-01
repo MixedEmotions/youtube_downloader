@@ -3,9 +3,7 @@
 #Email: xvrsas00@stud.fit.vutbr.cz
 #Author: Filip Conka
 #Email: xconka00@stud.fit.vutbr.cz
-#Author: Jakub Debef
-#Email: xdebef01@stud.fit.vutbr.cz
-#Last update: 2016-03-08
+#Last update: 2016-02-13
 from __future__ import unicode_literals
 
 import json,argparse,sys,io
@@ -22,11 +20,12 @@ def main(argv):
     parser.add_argument('--id',action = 'store', dest='profile_id')
     parser.add_argument('--username',action = 'store', dest='username')
     parser.add_argument('--search',action = 'store', dest='search')
+    parser.add_argument('--videoId',action = 'store', dest='videoId')
     parser.add_argument('--date',action = 'store', dest='date')
     parser.add_argument('--update_file',action = 'store', dest='update_file')
     parser.add_argument('--fetch',action = 'store_true', dest='fetch')
     parser.add_argument('--fetchallformats',action = 'store_true', dest='fetchallformats')
-    parser.add_argument('--outputdir',action = 'store', dest='outputdir', default="/tmp/youtube_output/")
+    parser.add_argument('--outputdir',action = 'store', dest='outputdir', default="/tmp/youtube_outputNesahat/")
     parser.add_argument('--outputtemplate',action = 'store', dest='outputtemplate', default="%(id)s_%(format)s.%(ext)s")
     parser.add_argument('--quiet',action = 'store_true', dest='quiet')
     parser.add_argument('--version', action='version', version='%(prog)s 1.0')
@@ -37,7 +36,7 @@ def main(argv):
     #Authenticate and construct service, authentization is not using oauth2 as it needs
     # to log in at browser
     try:
-        service = build('youtube', 'v3', developerKey='AIzaSyAZVOoUvR7zITNo3RZJmiqWHjFv10z3T9o')
+        service = build('youtube', 'v3', developerKey='AIzaSyCWs69ECTAVG9Il0A_beBk6xbfFnzom5Pg')
     except:
         sys.stderr.write('Error: Couldnt authenticate and construct service\n')
         exit(1)
@@ -51,6 +50,18 @@ def main(argv):
         except:
             sys.stderr.write('Error: Wrong username - or 404 request error\n')
             exit(1)
+    # videoId download mode
+    elif args.videoId:  
+        #make new dictionary
+        json_dictionary = dict()
+        json_dictionary['video'] = list()
+        #calling function that iterate over list and get video information (number of likes, dislikes etc..)
+        json_dictionary.update(videoID_download(args.videoId, service, json_dictionary, args))
+
+        #printing output to stdout
+        sys.stdout.write(json.dumps(json_dictionary, ensure_ascii=False).encode('utf-8'))
+        #exit succesfuly
+        exit(0)
     # search mode enabled
     elif args.search:  
         #default date 
@@ -149,6 +160,43 @@ def getVideoIds(videoDict):
         videoIds.append(video["video_id"])
     return videoIds
 
+#------------------------------------------------------------------------------
+#-------------------------------VIDEOID MODE------------------------------------     
+#------------------------------------------------------------------------------ 
+
+#function that download informations of video by ID given by argument --videoId
+def videoID_download(videoId, service, json_dictionary, args):
+    #
+    rating_resource = service.videos()
+    rating_request = rating_resource.list( part = 'snippet,statistics', id = videoId)
+
+    video_dictionary=dict()
+    try:
+        rating_list = rating_request.execute()
+    except:
+        sys.stderr.write('Error: Can\'t get rating of video  - or 404 request error\n')
+        exit(1)
+
+    video_dictionary['comments'] = list()
+    video_dictionary.update(get_list_of_comments_threads(videoId, service, video_dictionary))
+    #add path to video file (only if exist --fetch)
+    if args.fetch:
+        video_dictionary['video'] = download_video(videoId, args.fetchallformats, args.outputdir, args.outputtemplate, args.quiet)
+
+    for rating in rating_list['items']:
+        video_dictionary['title'] = rating['snippet']['title']
+        video_dictionary['description'] = rating['snippet']['description']
+        video_dictionary['channelId'] = rating['snippet']['channelId']
+        video_dictionary['publishedAt'] = rating['snippet']['publishedAt']
+        video_dictionary['channelTitle'] = rating['snippet']['channelTitle']
+        video_dictionary['view_count'] = rating['statistics']['viewCount']
+        video_dictionary['like_count'] = rating['statistics']['likeCount'] if 'likeCount' in rating['statistics'] else -1
+        video_dictionary['dislike_count'] = rating['statistics']['dislikeCount'] if 'dislikeCount' in rating['statistics'] else -1
+
+    
+    json_dictionary['video'].append(video_dictionary)
+    return json_dictionary
+
 
 #------------------------------------------------------------------------------
 #-------------------------------SEARCH MODE------------------------------------     
@@ -183,7 +231,7 @@ def search_video( service, json_dictionary, date, args):
                 video_dictionary['title'] = video['snippet']['title']
                 video_dictionary['description'] = video['snippet']['description']
                 video_dictionary['channel_id'] = video['snippet']['channelId']
-                #add path to video file (only if exist --fetch) Dzejkop
+                #add path to video file (only if exist --fetch)
                 if args.fetch:
                     video_dictionary['video'] = download_video(video_dictionary['video_id'], args.fetchallformats, args.outputdir, args.outputtemplate, args.quiet)
                 # need to get aditional information about rating, likes etc..
@@ -568,7 +616,7 @@ class getNameAndPath(object):
         return self.tmp
 
 #function download video
-def download_video(videoId, fetchAllFormats, outputdir="/tmp/youtube_output/", outputtemplate="%(id)s_%(format)s.%(ext)s", quiet=False):
+def download_video(videoId, fetchAllFormats, outputdir="/tmp/youtube_outputNesahat/", outputtemplate="%(id)s_%(format)s.%(ext)s", quiet=False):
     nameAndPath = getNameAndPath()
 
     ydl_opts = {
