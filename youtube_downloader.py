@@ -187,6 +187,7 @@ def videoID_download(videoId, service, json_dictionary, args):
 
     for rating in rating_list['items']:
         video_dictionary['title'] = rating['snippet']['title']
+        video_dictionary['videoId'] = rating['id']
         video_dictionary['description'] = rating['snippet']['description']
         video_dictionary['channelId'] = rating['snippet']['channelId']
         video_dictionary['publishedAt'] = rating['snippet']['publishedAt']
