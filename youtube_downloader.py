@@ -3,7 +3,9 @@
 #Email: xvrsas00@stud.fit.vutbr.cz
 #Author: Filip Conka
 #Email: xconka00@stud.fit.vutbr.cz
-#Last update: 2016-02-13
+#Author: Jakub Debef
+#Email: xdebef01@stud.fit.vutbr.cz
+#Last update: 2016-01-10
 from __future__ import unicode_literals
 
 import json,argparse,sys,io
@@ -25,7 +27,7 @@ def main(argv):
     parser.add_argument('--update_file',action = 'store', dest='update_file')
     parser.add_argument('--fetch',action = 'store_true', dest='fetch')
     parser.add_argument('--fetchallformats',action = 'store_true', dest='fetchallformats')
-    parser.add_argument('--outputdir',action = 'store', dest='outputdir', default="/tmp/youtube_outputNesahat/")
+    parser.add_argument('--outputdir',action = 'store', dest='outputdir', default="/tmp/youtube_output/")
     parser.add_argument('--outputtemplate',action = 'store', dest='outputtemplate', default="%(id)s_%(format)s.%(ext)s")
     parser.add_argument('--quiet',action = 'store_true', dest='quiet')
     parser.add_argument('--version', action='version', version='%(prog)s 1.0')
@@ -616,7 +618,7 @@ class getNameAndPath(object):
         return self.tmp
 
 #function download video
-def download_video(videoId, fetchAllFormats, outputdir="/tmp/youtube_outputNesahat/", outputtemplate="%(id)s_%(format)s.%(ext)s", quiet=False):
+def download_video(videoId, fetchAllFormats, outputdir="/tmp/youtube_output/", outputtemplate="%(id)s_%(format)s.%(ext)s", quiet=False):
     nameAndPath = getNameAndPath()
 
     ydl_opts = {
